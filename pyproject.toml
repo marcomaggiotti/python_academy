@@ -10,4 +10,4 @@ dev = ["pytest>=7"]
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib -q"
 pythonpath = ["."]
-testpaths = ["modules", "projects"]
+testpaths = ["modules", "advanced", "projects"]

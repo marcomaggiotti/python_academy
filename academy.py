@@ -4,8 +4,9 @@
 Usage:
     python academy.py list                 # list modules and projects
     python academy.py progress             # run every test suite, show a scoreboard
-    python academy.py check 03             # run tests for module 03 (use p1, p2 for projects)
+    python academy.py check 03             # module 03 (a1..a6 = advanced, p1/p2 = projects)
     python academy.py check 03 -k vector   # extra args are passed through to pytest
+    python academy.py check a2             # advanced challenge 02
     python academy.py verify               # run all tests against the reference solutions
 """
 
@@ -18,7 +19,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-SECTIONS = ("modules", "projects")
+SECTIONS = ("modules", "advanced", "projects")
 
 
 def units() -> list[Path]:
@@ -39,11 +40,12 @@ def title_of(unit: Path) -> str:
 
 
 def find(prefix: str) -> Path:
-    """Resolve "3"/"03" -> module 03, "p1"/"p01" -> project 01, or any name fragment."""
+    """Resolve "3" -> module 03, "a1" -> advanced 01, "p1" -> project 01, or a name fragment."""
     all_units = units()
     section = "modules"
-    if (m := re.fullmatch(r"[pP](\d+)", prefix)):
-        section, prefix = "projects", m.group(1)
+    if (m := re.fullmatch(r"([pPaA])(\d+)", prefix)):
+        section = "projects" if m.group(1).lower() == "p" else "advanced"
+        prefix = m.group(2)
     if prefix.isdigit():
         number = f"{int(prefix):02d}_"
         matches = [u for u in all_units if u.parent.name == section and u.name.startswith(number)]
@@ -91,8 +93,11 @@ def cmd_list() -> None:
 
 def cmd_progress(solution: bool = False) -> None:
     grand_pass = grand_total = 0
-    print()
+    current = None
     for unit in units():
+        if unit.parent.name != current:
+            current = unit.parent.name
+            print(f"\n{current.upper()}")
         result = run_pytest(unit, [], solution=solution, quiet=True)
         passed, failed = summarize(result.stdout)
         total = passed + failed
